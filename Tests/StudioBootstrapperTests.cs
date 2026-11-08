@@ -23,7 +23,7 @@ public class StudioBootstrapperTests
         const string version = "0.700.0.1";
         const string guid = "version-0123456789abcdef";
     
-        const string configBase = "https://raw.githubusercontent.com/MaximumADHD/Roblox-Studio-Mod-Manager/main/Config/";
+        const string configBase = "https://raw.githubusercontent.com/HarukaTea/RS-Mod-Manager/main/Config/";
         const string deploymentBase = "https://setup.rbxcdn.com/channel/common/" + guid + "-";
 
         byte[] shared = Encoding.UTF8.GetBytes("shared content");

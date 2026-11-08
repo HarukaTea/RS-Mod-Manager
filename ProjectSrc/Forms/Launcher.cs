@@ -15,6 +15,7 @@ namespace RobloxStudioModManager
     [SupportedOSPlatform("windows")]
     public partial class Launcher : Form
     {
+        private static readonly TimeSpan StartupNetworkTimeout = TimeSpan.FromSeconds(10);
         private static VersionManifest versionRegistry => Program.State.VersionData;
         private readonly string[] args = null;
 
@@ -25,6 +26,43 @@ namespace RobloxStudioModManager
 
             InitializeComponent();
             releaseTag.Text = Program.ReleaseTag;
+        }
+
+        private Form createNetworkWaitDialog(string status)
+        {
+            var dialog = new Form
+            {
+                Text = "Connecting...",
+                ClientSize = new Size(360, 120),
+                Font = SystemFonts.MessageBoxFont,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.Manual,
+                ControlBox = false,
+                ShowInTaskbar = false,
+            };
+
+            dialog.Controls.Add(new Label
+            {
+                Text = status,
+                Location = new Point(20, 18),
+                Size = new Size(320, 24),
+            });
+            dialog.Controls.Add(new Label
+            {
+                Text = $"Waiting for a network response (up to {StartupNetworkTimeout.TotalSeconds:0} seconds).",
+                Location = new Point(20, 46),
+                Size = new Size(320, 24),
+            });
+            dialog.Controls.Add(new ProgressBar
+            {
+                Style = ProgressBarStyle.Marquee,
+                MarqueeAnimationSpeed = 30,
+                Location = new Point(20, 82),
+                Size = new Size(320, 16),
+            });
+
+            dialog.Location = new Point(Left + (Width - dialog.Width) / 2, Top + (Height - dialog.Height) / 2);
+            return dialog;
         }
 
         private void promptNewRelease(string releaseTag)
@@ -66,9 +104,48 @@ namespace RobloxStudioModManager
             // Clear the current list of target items.
             targetVersion.Items.Clear();
             targetVersion.Items.Add(latest);
+            targetVersion.Enabled = false;
+            targetVersionLabel.Enabled = false;
 
             // Populate the items list using the deploy history.
-            var deployLogs = await StudioDeployLogs.Get(Program.AllowUnsupportedVersions, channelName, channelToken);
+            StudioDeployLogs deployLogs;
+
+            try
+            {
+                using var waiting = createNetworkWaitDialog("Loading Studio versions...");
+                waiting.Show(this);
+                waiting.Update();
+                bool wasEnabled = Enabled;
+                Enabled = false;
+
+                try
+                {
+                    // The dependency does not expose cancellation, so limit how long the UI waits.
+                    deployLogs = await StudioDeployLogs.Get(Program.AllowUnsupportedVersions, channelName, channelToken)
+                        .WaitAsync(StartupNetworkTimeout);
+                }
+                finally
+                {
+                    if (!IsDisposed && !Disposing)
+                        Enabled = wasEnabled;
+                }
+            }
+            catch (Exception ex) when (ex is HttpRequestException || ex is OperationCanceledException || ex is TimeoutException)
+            {
+                if (IsDisposed || Disposing)
+                    return;
+
+                string message = ex is HttpRequestException
+                    ? "Could not fetch Studio version information.\n" + ex.Message
+                    : "Fetching Studio version information timed out after 10 seconds.\nCheck your connection and try again.";
+
+                MessageBox.Show(this, message, "Network error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (IsDisposed || Disposing)
+                return;
+
             HashSet<DeployLog> targets = deployLogs.CurrentLogs;
 
             targetVersion.Enabled = deployLogs.HasHistory;
@@ -127,33 +204,38 @@ namespace RobloxStudioModManager
                 return;
             }
 
-            using (var http = new HttpClient())
+            string latestReleaseTag = null;
+
+            try
             {
-                var get = http.GetStringAsync(Program.BaseConfigUrl + "LatestReleaseTag.txt");
-
-                await get.ContinueWith(task =>
+                using var waiting = createNetworkWaitDialog("Checking for updates...");
+                waiting.Show(this);
+                waiting.Update();
+                using var http = new HttpClient { Timeout = StartupNetworkTimeout };
+                latestReleaseTag = (await http.GetStringAsync(Program.BaseConfigUrl + "LatestReleaseTag.txt")).Trim();
+            }
+            catch (Exception ex) when (ex is HttpRequestException || ex is OperationCanceledException)
+            {
+                // An optional update check must not prevent the launcher from opening.
+                Debug.WriteLine($"Skipping update check: {ex.Message}");
+            }
+            finally
+            {
+                if (!IsDisposed && !Disposing)
                 {
-                    if (task.IsFaulted)
-                    {
-                        MessageBox.Show("Could not fetch latest release tag!\nYou may not have an internet connection.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
-
-                    if (!task.IsCompleted)
-                        return;
-
-                    string releaseTag = task.Result.Trim();
-
-                    if (releaseTag == Program.ReleaseTag)
-                        return;
-
-                    Invoke(new Action<string>(promptNewRelease), releaseTag);
-                });
+                    UseWaitCursor = false;
+                    Enabled = true;
+                }
             }
 
-            setVersionHistory();
-            UseWaitCursor = false;
-            Enabled = true;
+            if (IsDisposed || Disposing)
+                return;
+
+            if (!string.IsNullOrEmpty(latestReleaseTag) && latestReleaseTag != Program.ReleaseTag)
+                promptNewRelease(latestReleaseTag);
+
+            if (!IsDisposed && !Disposing)
+                setVersionHistory();
         }
 
         public static string getModPath()

@@ -16,8 +16,8 @@ namespace RobloxStudioModManager
     static class Program
     {
         public const string RepoBranch = "main";
-        public const string RepoOwner = "MaximumADHD";
-        public const string RepoName = "Roblox-Studio-Mod-Manager";
+        public const string RepoOwner = "HarukaTea";
+        public const string RepoName = "RS-Mod-Manager";
         public const string ReleaseTag = "v2026.11.06.36ec4c0";
 
         public const string BaseUrl = "https://setup.rbxcdn.com";

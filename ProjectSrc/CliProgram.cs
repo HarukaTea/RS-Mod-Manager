@@ -10,7 +10,7 @@ namespace RobloxStudioModManager
     static class Program
     {
         public const string BaseUrl = "https://setup.rbxcdn.com";
-        public const string BaseConfigUrl = "https://raw.githubusercontent.com/MaximumADHD/Roblox-Studio-Mod-Manager/main/Config/";
+        public const string BaseConfigUrl = "https://raw.githubusercontent.com/HarukaTea/RS-Mod-Manager/main/Config/";
         public const StringComparison StringFormat = StringComparison.Ordinal;
         public static readonly CultureInfo Format = CultureInfo.InvariantCulture;
         public static readonly NumberFormatInfo NumberFormat = NumberFormatInfo.InvariantInfo;

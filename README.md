@@ -7,6 +7,12 @@
 
 <hr/>
 
+# About this fork
+
+> Forked to fix network issues in China.
+
+This is a fork of [MaximumADHD's Roblox Studio Mod Manager](https://github.com/MaximumADHD/Roblox-Studio-Mod-Manager), maintained by [HarukaTea](https://github.com/HarukaTea). Its main goal is to fix connectivity issues for users in mainland China.
+
 # What is this?
 
 The **Roblox Studio Mod Manager** is an open-source alternative bootstrapper for Roblox Studio. It is intended for power users who want to make experimental changes/tweaks to Roblox Studio without those changes being overwritten, and experiment with new features of Roblox Studio before the general public.
@@ -21,8 +27,8 @@ The **Roblox Studio Mod Manager** is an open-source alternative bootstrapper for
 
 
 # Downloads
-The latest version can be found on the ***Releases*** page of this repository:<br/>
-https://github.com/MaximumADHD/Roblox-Studio-Mod-Manager/releases
+Releases for this fork can be found on the ***Releases*** page of this repository:<br/>
+https://github.com/HarukaTea/RS-Mod-Manager/releases
 
 # ANTI-VIRUS DISCLAIMER
 

@@ -65,36 +65,6 @@ namespace RobloxStudioModManager
             return dialog;
         }
 
-        private void promptNewRelease(string releaseTag)
-        {
-            #if !DEBUG
-            Enabled = false;
-
-            DialogResult result = MessageBox.Show
-            (
-                "There's a new version of the mod manager available!\n" +
-                "This version is likely broken or no longer supported.\n" +
-                "Would you like to check it out?",
-
-                "Update available!",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Information
-            );
-
-            if (result == DialogResult.Yes)
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = $"https://github.com/{Program.RepoOwner}/{Program.RepoName}/releases/tag/{releaseTag}",
-                    UseShellExecute = true,
-                });
-                Application.Exit();
-            }
-
-            Enabled = true;
-            #endif
-        }
-
         private async void setVersionHistory(string channelName = "LIVE", string channelToken = "")
         {
             // Grab the version currently being targeted.
@@ -192,50 +162,18 @@ namespace RobloxStudioModManager
             targetVersion.SelectedItem = latest;
         }
 
-        private async void Launcher_Load(object sender, EventArgs e)
+        private void Launcher_Load(object sender, EventArgs e)
         {
-            Enabled = false;
-            UseWaitCursor = true;
-
             if (args != null)
             {
+                Enabled = false;
+                UseWaitCursor = true;
                 launchStudio_Click();
                 Hide();
                 return;
             }
 
-            string latestReleaseTag = null;
-
-            try
-            {
-                using var waiting = createNetworkWaitDialog("Checking for updates...");
-                waiting.Show(this);
-                waiting.Update();
-                using var http = new HttpClient { Timeout = StartupNetworkTimeout };
-                latestReleaseTag = (await http.GetStringAsync(Program.BaseConfigUrl + "LatestReleaseTag.txt")).Trim();
-            }
-            catch (Exception ex) when (ex is HttpRequestException || ex is OperationCanceledException)
-            {
-                // An optional update check must not prevent the launcher from opening.
-                Debug.WriteLine($"Skipping update check: {ex.Message}");
-            }
-            finally
-            {
-                if (!IsDisposed && !Disposing)
-                {
-                    UseWaitCursor = false;
-                    Enabled = true;
-                }
-            }
-
-            if (IsDisposed || Disposing)
-                return;
-
-            if (!string.IsNullOrEmpty(latestReleaseTag) && latestReleaseTag != Program.ReleaseTag)
-                promptNewRelease(latestReleaseTag);
-
-            if (!IsDisposed && !Disposing)
-                setVersionHistory();
+            setVersionHistory();
         }
 
         public static string getModPath()

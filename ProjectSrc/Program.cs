@@ -18,7 +18,7 @@ namespace RobloxStudioModManager
         public const string RepoBranch = "main";
         public const string RepoOwner = "HarukaTea";
         public const string RepoName = "RS-Mod-Manager";
-        public const string ReleaseTag = "v2026.11.08.7004880";
+        public const string ReleaseTag = "v2026.11.13.8f9f0d8";
 
         public const string BaseUrl = "https://setup.rbxcdn.com";
         public static readonly string BaseConfigUrl = $"https://raw.githubusercontent.com/{RepoOwner}/{RepoName}/{RepoBranch}/Config/";
